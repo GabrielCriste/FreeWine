@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+# Script para instalar e configurar o Wine a partir do repositório FreeWine
 
 ROOTFS_DIR=$(pwd)
 export PATH=$PATH:~/.local/usr/bin
@@ -17,7 +19,7 @@ else
 fi
 
 # Verificar se o Wine já foi instalado, caso contrário, instalar
-if [ ! -e $ROOTFS_DIR/.installed ]; then
+if [ ! -e "$ROOTFS_DIR/.installed" ]; then
   echo "#######################################################################################"
   echo "#"
   echo "#                                      Wine INSTALLER"
@@ -27,49 +29,59 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
   echo "#"
   echo "#######################################################################################"
 
+  # Pergunta ao usuário se deseja instalar o Wine
   read -p "Do you want to install Wine? (YES/no): " install_wine
-fi
 
-case $install_wine in
-  [yY][eE][sS])
-    # Baixar e descompactar o Wine
-    if [ -f "wine-10.2-amd64.tar.xz" ]; then
-      tar -xf wine-10.2-amd64.tar.xz -C $ROOTFS_DIR
-    elif [ -f "wine-10.2-staging-amd64-wow64.tar.xz" ]; then
-      tar -xf wine-10.2-staging-amd64-wow64.tar.xz -C $ROOTFS_DIR
-    else
-      echo "Nenhum arquivo Wine encontrado para extração."
-      exit 1
-    fi
-    ;;
-  *)
-    echo "Skipping Wine installation."
-    ;;
-esac
+  case $install_wine in
+    [yY][eE][sS]|[yY])
+      # Baixar o Wine a partir do repositório FreeWine
+      echo "Downloading Wine..."
+      if ! wget -q --show-progress -O wine.tar.xz "https://github.com/GabrielCriste/FreeWine/releases/download/latest/wine-${ARCH_ALT}.tar.xz"; then
+        echo "Failed to download Wine. Please check your internet connection."
+        exit 1
+      fi
+
+      # Extrair o Wine
+      echo "Extracting Wine..."
+      if ! tar -xf wine.tar.xz -C "$ROOTFS_DIR"; then
+        echo "Failed to extract Wine."
+        exit 1
+      fi
+
+      # Marcar como instalado
+      touch "$ROOTFS_DIR/.installed"
+      ;;
+    *)
+      echo "Skipping Wine installation."
+      exit 0
+      ;;
+  esac
+fi
 
 # Verificar se o Wine foi extraído corretamente
-if [ ! -e $ROOTFS_DIR/.installed ]; then
-  chmod -R 755 $ROOTFS_DIR
-  touch $ROOTFS_DIR/.installed
+if [ ! -e "$ROOTFS_DIR/.installed" ]; then
+  echo "Wine installation failed. Please check the logs."
+  exit 1
 fi
 
-CYAN='\e[0;36m'
-WHITE='\e[0;37m'
-
-RESET_COLOR='\e[0m'
-
-# Função para exibir a mensagem de conclusão
-display_gg() {
-  echo -e "${WHITE}___________________________________________________${RESET_COLOR}"
-  echo -e ""
-  echo -e "           ${CYAN}-----> Wine Setup Completed! <----${RESET_COLOR}"
-  echo -e ""
-  echo -e "${WHITE}___________________________________________________${RESET_COLOR}"
-}
-
-clear
-display_gg
+# Exibir mensagem de conclusão
+echo "___________________________________________________"
+echo ""
+echo "           -----> Wine Setup Completed! <----"
+echo ""
+echo "___________________________________________________"
 
 # Verificar e executar o Wine
-$ROOTFS_DIR/usr/local/bin/wine64 --version
-$ROOTFS_DIR/usr/local/bin/winecfg
+if [ -e "$ROOTFS_DIR/usr/local/bin/wine64" ]; then
+  "$ROOTFS_DIR/usr/local/bin/wine64" --version
+else
+  echo "Wine not found in the expected directory."
+  exit 1
+fi
+
+if [ -e "$ROOTFS_DIR/usr/local/bin/winecfg" ]; then
+  "$ROOTFS_DIR/usr/local/bin/winecfg"
+else
+  echo "Winecfg not found in the expected directory."
+  exit 1
+fi

@@ -73,3 +73,6 @@ display_gg
 # Verificar e executar o Wine
 $ROOTFS_DIR/usr/local/bin/wine64 --version
 $ROOTFS_DIR/usr/local/bin/winecfg
+
+# Manter o terminal aberto
+read -p "Press Enter to exit..."

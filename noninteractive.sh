@@ -90,8 +90,7 @@ display_gg() {
 clear
 display_gg
 
-# Executar o Wine dentro do proot (opcional)
-$ROOTFS_DIR/usr/local/bin/proot \
-  --rootfs="${ROOTFS_DIR}" \
-  -0 -w "/root" -b /dev -b /sys -b /proc -b /etc/resolv.conf --kill-on-exit \
-  $ROOTFS_DIR/usr/local/bin/wine64 --version
+# Mensagem final
+echo "Wine installation completed!"
+echo "You can now run Wine using the following command:"
+echo "$ROOTFS_DIR/usr/local/bin/proot --rootfs=\"${ROOTFS_DIR}\" -0 -w \"/root\" -b /dev -b /sys -b /proc -b /etc/resolv.conf --kill-on-exit $ROOTFS_DIR/usr/local/bin/wine64 --version"

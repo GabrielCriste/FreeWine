@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Script para instalar e configurar o Wine a partir do repositório FreeWine
-
 ROOTFS_DIR=$(pwd)
 export PATH=$PATH:~/.local/usr/bin
 max_retries=50

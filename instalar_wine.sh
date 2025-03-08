@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # instalar_wine.sh
 # Script para extrair e preparar o Wine a partir dos arquivos baixados.
 # Não requer acesso a root.
@@ -14,11 +14,11 @@ if [ "$ARCH" = "x86_64" ]; then
 elif [ "$ARCH" = "aarch64" ]; then
   ARCH_ALT=arm64
 else
-  printf "Unsupported CPU architecture: ${ARCH}\n"
+  printf "Unsupported CPU architecture: %s\n" "$ARCH"
   exit 1
 fi
 
-# Se o arquivo de instalação não foi marcado, inicia o processo
+# Se a instalação ainda não foi concluída, inicia o processo
 if [ ! -e "$ROOTFS_DIR/.installed" ]; then
   echo "#######################################################################################"
   echo "#"
@@ -79,9 +79,19 @@ echo -e "           ${CYAN}-----> Extração do Wine concluída! <----${RESET_CO
 echo -e ""
 echo -e "${WHITE}___________________________________________________${RESET_COLOR}"
 
-# Se desejar, teste a versão do Wine extraído (ajuste o caminho conforme a estrutura extraída)
-if [ -x "$ROOTFS_DIR/wine/bin/wine64" ]; then
-  "$ROOTFS_DIR/wine/bin/wine64" --version
+# Verifica se o executável do Wine foi encontrado no caminho esperado.
+# Se não, tenta localizá-lo em outra pasta dentro do ROOTFS.
+WINE_EXE="$ROOTFS_DIR/wine/bin/wine64"
+if [ -x "$WINE_EXE" ]; then
+  "$WINE_EXE" --version
 else
-  echo "Wine não encontrado no diretório esperado. Verifique se a extração ocorreu corretamente."
+  # Tenta encontrar o executável wine64 em outro diretório dentro do ROOTFS
+  WINE_EXE=$(find "$ROOTFS_DIR" -type f -executable -name wine64 2>/dev/null | head -n 1)
+  if [ -n "$WINE_EXE" ]; then
+    echo "Wine encontrado em: $WINE_EXE"
+    "$WINE_EXE" --version
+  else
+    echo "Wine não encontrado no diretório esperado. Verifique se a extração ocorreu corretamente."
+    exit 1
+  fi
 fi

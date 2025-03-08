@@ -1,27 +1,10 @@
 #!/bin/bash
 
-set -e  # Encerra o script imediatamente em caso de erro
-
-# Diretório base para instalação
 ROOTFS_DIR=$(pwd)
-export PATH=$PATH:$ROOTFS_DIR/usr/local/bin
-
-# Configurações
+export PATH=$PATH:~/.local/usr/bin
 max_retries=50
 timeout=1
 ARCH=$(uname -m)
-
-# Verificar dependências
-if ! command -v wget &> /dev/null || ! command -v tar &> /dev/null; then
-  echo "Please install 'wget' and 'tar' to continue."
-  exit 1
-fi
-
-# Verificar permissões
-if [ ! -w "$ROOTFS_DIR" ]; then
-  echo "You do not have write permissions for $ROOTFS_DIR."
-  exit 1
-fi
 
 # Definir a arquitetura baseada no sistema
 if [ "$ARCH" = "x86_64" ]; then
@@ -66,9 +49,6 @@ case $install_wine in
 
     # Marcar como instalado
     touch "$ROOTFS_DIR/.installed"
-
-    # Limpar arquivo temporário
-    rm -f /tmp/wine.tar.xz
     ;;
   *)
     echo "Skipping Wine installation."
@@ -90,7 +70,6 @@ echo "___________________________________________________"
 
 # Verificar e executar o Wine
 if [ -e "$ROOTFS_DIR/usr/local/bin/wine64" ]; then
-  echo "Wine version:"
   "$ROOTFS_DIR/usr/local/bin/wine64" --version
 else
   echo "Wine not found in the expected directory."
@@ -98,7 +77,6 @@ else
 fi
 
 if [ -e "$ROOTFS_DIR/usr/local/bin/winecfg" ]; then
-  echo "Running winecfg..."
   "$ROOTFS_DIR/usr/local/bin/winecfg"
 else
   echo "Winecfg not found in the expected directory."

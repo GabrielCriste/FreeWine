@@ -1,84 +1,64 @@
 #!/bin/bash
 
+# Diretório atual
 ROOTFS_DIR=$(pwd)
-export PATH=$PATH:~/.local/usr/bin
-max_retries=50
-timeout=1
-ARCH=$(uname -m)
 
-# Definir a arquitetura baseada no sistema
-if [ "$ARCH" = "x86_64" ]; then
-  ARCH_ALT=amd64
-elif [ "$ARCH" = "aarch64" ]; then
-  ARCH_ALT=arm64
-else
-  printf "Unsupported CPU architecture: ${ARCH}"
-  exit 1
-fi
+# Arquivo principal do Wine
+WINE_ARCHIVE="$ROOTFS_DIR/wine-10.2-amd64.tar.xz"
 
-# Verificar se o Wine já foi instalado, caso contrário, instalar
-if [ ! -e "$ROOTFS_DIR/.installed" ]; then
-  echo "#######################################################################################"
-  echo "#"
-  echo "#                                      FreeWine INSTALLER"
-  echo "#"
-  echo "#                           Copyright (C) 2024, GabrielCriste/FreeWine"
-  echo "#"
-  echo "#"
-  echo "#######################################################################################"
+# Função para verificar se o Wine já está instalado
+function check_wine_installed {
+  if command -v wine64 &> /dev/null; then
+    echo "O Wine já está instalado."
+    exit 0
+  fi
+}
 
-  read -p "Do you want to install Wine? (YES/no): " install_wine
-fi
+# Função para extrair o arquivo tar.xz
+function extract_wine {
+  echo "Extraindo o Wine..."
+  tar -xf "$WINE_ARCHIVE" -C "$ROOTFS_DIR"
+  if [ $? -ne 0 ]; then
+    echo "Falha ao extrair o Wine."
+    exit 1
+  fi
+}
 
-case $install_wine in
-  [yY][eE][sS]|[yY])
-    # Baixar o Wine a partir do repositório FreeWine
-    echo "Downloading Wine..."
-    if ! wget --tries=$max_retries --timeout=$timeout --no-hsts -O /tmp/wine.tar.xz \
-      "https://github.com/GabrielCriste/FreeWine/releases/download/latest/wine-${ARCH_ALT}.tar.xz"; then
-      echo "Failed to download Wine. Please check your internet connection."
-      exit 1
-    fi
+# Função para configurar o Wine
+function configure_wine {
+  echo "Configurando o Wine..."
+  cd "$ROOTFS_DIR/wine-10.2-amd64" || exit 1
+  ./configure --prefix=/usr/local
+  if [ $? -ne 0 ]; then
+    echo "Falha na configuração do Wine."
+    exit 1
+  fi
+}
 
-    # Extrair o Wine
-    echo "Extracting Wine..."
-    if ! tar -xf /tmp/wine.tar.xz -C "$ROOTFS_DIR"; then
-      echo "Failed to extract Wine."
-      exit 1
-    fi
+# Função para compilar e instalar o Wine
+function build_and_install_wine {
+  echo "Compilando e instalando o Wine..."
+  make
+  if [ $? -ne 0 ]; then
+    echo "Falha na compilação do Wine."
+    exit 1
+  fi
+  sudo make install
+  if [ $? -ne 0 ]; then
+    echo "Falha na instalação do Wine."
+    exit 1
+  fi
+}
 
-    # Marcar como instalado
-    touch "$ROOTFS_DIR/.installed"
-    ;;
-  *)
-    echo "Skipping Wine installation."
-    ;;
-esac
+# Função principal
+function main {
+  check_wine_installed
+  extract_wine
+  configure_wine
+  build_and_install_wine
+  echo "Wine instalado com sucesso!"
+  wine64 --version
+}
 
-# Configurar o Wine
-if [ ! -e "$ROOTFS_DIR/.installed" ]; then
-  echo "Wine installation failed. Please check the logs."
-  exit 1
-fi
-
-# Exibir mensagem de conclusão
-echo "___________________________________________________"
-echo ""
-echo "           -----> Wine Setup Completed! <----"
-echo ""
-echo "___________________________________________________"
-
-# Verificar e executar o Wine
-if [ -e "$ROOTFS_DIR/usr/local/bin/wine64" ]; then
-  "$ROOTFS_DIR/usr/local/bin/wine64" --version
-else
-  echo "Wine not found in the expected directory."
-  exit 1
-fi
-
-if [ -e "$ROOTFS_DIR/usr/local/bin/winecfg" ]; then
-  "$ROOTFS_DIR/usr/local/bin/winecfg"
-else
-  echo "Winecfg not found in the expected directory."
-  exit 1
-fi
+# Executa a função principal
+main

@@ -2,8 +2,11 @@
 
 set -e  # Encerra o script imediatamente em caso de erro
 
+# Diretório base para instalação
 ROOTFS_DIR=$(pwd)
-export PATH=$PATH:~/.local/usr/bin
+export PATH=$PATH:$ROOTFS_DIR/usr/local/bin
+
+# Configurações
 max_retries=50
 timeout=1
 ARCH=$(uname -m)
@@ -87,6 +90,7 @@ echo "___________________________________________________"
 
 # Verificar e executar o Wine
 if [ -e "$ROOTFS_DIR/usr/local/bin/wine64" ]; then
+  echo "Wine version:"
   "$ROOTFS_DIR/usr/local/bin/wine64" --version
 else
   echo "Wine not found in the expected directory."
@@ -94,6 +98,7 @@ else
 fi
 
 if [ -e "$ROOTFS_DIR/usr/local/bin/winecfg" ]; then
+  echo "Running winecfg..."
   "$ROOTFS_DIR/usr/local/bin/winecfg"
 else
   echo "Winecfg not found in the expected directory."

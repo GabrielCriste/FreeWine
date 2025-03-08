@@ -1,10 +1,24 @@
 #!/bin/bash
 
+set -e  # Encerra o script imediatamente em caso de erro
+
 ROOTFS_DIR=$(pwd)
 export PATH=$PATH:~/.local/usr/bin
 max_retries=50
 timeout=1
 ARCH=$(uname -m)
+
+# Verificar dependências
+if ! command -v wget &> /dev/null || ! command -v tar &> /dev/null; then
+  echo "Please install 'wget' and 'tar' to continue."
+  exit 1
+fi
+
+# Verificar permissões
+if [ ! -w "$ROOTFS_DIR" ]; then
+  echo "You do not have write permissions for $ROOTFS_DIR."
+  exit 1
+fi
 
 # Definir a arquitetura baseada no sistema
 if [ "$ARCH" = "x86_64" ]; then
@@ -49,6 +63,9 @@ case $install_wine in
 
     # Marcar como instalado
     touch "$ROOTFS_DIR/.installed"
+
+    # Limpar arquivo temporário
+    rm -f /tmp/wine.tar.xz
     ;;
   *)
     echo "Skipping Wine installation."
